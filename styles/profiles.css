@@ -1,0 +1,131 @@
+/* profiles.css start */
+
+.profile-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 0 20px; /* Top padding only */
+  min-height: auto;
+  background: linear-gradient(to right, #3c1053, #ad5389);
+  margin-bottom: 0;
+}
+
+
+
+.profile-card {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px; /* Ensure no bottom margin */
+}
+
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #6f42c1;
+  margin-bottom: 1rem;
+}
+
+.profile-info {
+  text-align: left; /* ✅ LEFT ALIGN FIX */
+}
+
+.profile-info h2 {
+  margin-bottom: 10px;
+}
+
+.profile-info p {
+  margin: 0.3rem 0;
+  font-size: 1rem;
+}
+
+/* Avatar upload section */
+.avatar-upload {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Button group */
+.profile-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Button styles */
+.upload-btn,
+.cancel-btn,
+.save-btn {
+  padding: 10px 18px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  border: none;
+}
+
+.upload-btn {
+  background-color: #6f42c1;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.save-btn {
+  background-color: #198754;
+  color: white;
+}
+
+.profile-buttons button:hover {
+  opacity: 0.9;
+}
+
+/* Form input inside edit mode */
+input[type="text"],
+input[type="number"] {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .avatar-upload {
+    align-items: stretch;
+  }
+
+  .profile-info {
+    text-align: left;
+  }
+}
+
+/* profiles.css end */
