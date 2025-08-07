@@ -112,33 +112,61 @@ export default function Profile() {
 };
 
 
- const handleAvatarUpload = async () => {
-  if (!avatarFile) return toast.error('Choose a file first');
+const handleAvatarUpload = async () => {
+  const userId = session?.user?.id;
+  if (!userId) {
+    toast.error("Please save your profile before uploading an avatar.");
+    return;
+  }
+
+  if (!avatarFile) return toast.error("Please choose a file");
 
   const formDataUpload = new FormData();
-  formDataUpload.append('file', avatarFile);
-  formDataUpload.append('userId', session.user.id); // ✅ instead of email
-
+  formDataUpload.append('avatar', avatarFile);
+  formDataUpload.append('email', session.user.email);
+  if (userData?.avatarPublicId) {
+    formDataUpload.append('oldPublicId', userData.avatarPublicId); // 🧨 Send old avatar to delete
+  }
 
   setUploading(true);
   try {
     const res = await fetch('/api/upload-avatar', {
       method: 'POST',
-      body: formDataUpload, // ✅ FormData body
+      body: formDataUpload,
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Upload failed');
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
 
-    setAvatarPreview(data.url); // ✅ Update preview
     toast.success('Avatar uploaded');
+
+    // 💾 Save new avatar to form data
+    const saveRes = await fetch('/api/forms', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...formData,
+        userId,
+        avatarUrl: data.url,
+        avatarPublicId: data.public_id,
+      }),
+    });
+
+    const saveData = await saveRes.json();
+    if (!saveRes.ok) throw new Error(saveData.message || 'Save failed');
+
+    setAvatarPreview(data.url);
+    setUserData(saveData.form);
+    setFormData(saveData.form);
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error(err);
     toast.error('Upload failed');
   } finally {
     setUploading(false);
   }
 };
+
+
 
 
   if (loading) {
@@ -223,38 +251,49 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="avatar-upload">
-          {editing && (
-            <input
-              type="file"
-              onChange={(e) => setAvatarFile(e.target.files[0])}
-            />
-          )}
+  
 
-          <div className="profile-buttons">
-            {editing ? (
-              <>
-                <button
-                  onClick={handleAvatarUpload}
-                  className="upload-btn"
-                  disabled={uploading}
-                >
-                  {uploading ? "Uploading..." : "Upload Avatar"}
-                </button>
-                <button className="cancel-btn" onClick={handleCancel}>
-                  Cancel
-                </button>
-                <button className="save-btn" onClick={handleSave}>
-                  Save Profile
-                </button>
-              </>
-            ) : (
-              <button className="upload-btn" onClick={handleEditToggle}>
-                Edit Details
-              </button>
-            )}
-          </div>
-        </div>
+<div className="avatar-upload">
+  {editing && (
+    <input
+      type="file"
+      onChange={(e) => setAvatarFile(e.target.files[0])}
+      className="avatar-file-input"
+    />
+  )}
+
+  <div className="profile-buttons">
+    {editing ? (
+      <>
+        <button
+          onClick={() => {
+            const userId = session?.user?.id;
+            if (!userId) {
+              toast.error("Please save your profile before uploading an avatar.");
+              return;
+            }
+            handleAvatarUpload();
+          }}
+          className="upload-btn"
+          disabled={uploading}
+        >
+          {uploading ? "Uploading..." : "Upload Avatar"}
+        </button>
+        <button className="cancel-btn" onClick={handleCancel}>
+          Cancel
+        </button>
+        <button className="save-btn" onClick={handleSave}>
+          Save Profile
+        </button>
+      </>
+    ) : (
+      <button className="upload-btn" onClick={handleEditToggle}>
+        Edit Details
+      </button>
+    )}
+  </div>
+</div>
+
       </div>
     </div>
   );

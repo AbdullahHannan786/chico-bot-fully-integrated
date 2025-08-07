@@ -13,10 +13,11 @@ import '../styles/profiles.css';
 import '../styles/auth.css';
 import '../styles/hero.css';
 import '../styles/darkLanding.css';
+import '../styles/navbar.css'
 
 function AuthWrapper({ Component, pageProps }) {
   const router = useRouter();
-  const isPublicRoute = ["/login", "/signup"].includes(router.pathname);
+  const isPublicRoute = ["/login", "/signup",].includes(router.pathname);
 
   return (
     <>

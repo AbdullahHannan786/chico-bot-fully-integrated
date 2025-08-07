@@ -1,15 +1,12 @@
 /* profiles.css start */
-
 .profile-container {
   display: flex;
   justify-content: center;
-  padding: 40px 20px 0 20px; /* Top padding only */
+  padding: 40px 20px 20px;
   min-height: auto;
   background: linear-gradient(to right, #3c1053, #ad5389);
   margin-bottom: 0;
 }
-
-
 
 .profile-card {
   background: white;
@@ -18,7 +15,7 @@
   max-width: 600px;
   width: 100%;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px; /* Ensure no bottom margin */
+  margin-bottom: 0;
 }
 
 
@@ -112,19 +109,61 @@ input[type="number"] {
 }
 
 /* Responsive layout */
+/* profiles.css mobile layout fixes */
+
+/* Make profile-card responsive */
 @media (max-width: 768px) {
-  .profile-header {
+  .profile-card {
     flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-card {
+    padding: 20px;
+  }
+
+  .avatar-section {
+    margin-bottom: 1rem;
+  }
+
+  .info-section {
     align-items: center;
     text-align: center;
   }
 
   .avatar-upload {
-    align-items: stretch;
+    width: 100%;
+    text-align: center;
+    margin-top: 1rem;
   }
 
-  .profile-info {
-    text-align: left;
+  .avatar-upload input[type="file"] {
+    width: 90%;
+    max-width: 280px;
+    margin: 0 auto 10px;
+    display: block;
+    font-size: 14px;
+  }
+
+  .profile-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .upload-btn,
+  .cancel-btn,
+  .save-btn {
+    width: 85%;
+    max-width: 300px;
+    font-size: 15px;
+    padding: 10px;
   }
 }
 

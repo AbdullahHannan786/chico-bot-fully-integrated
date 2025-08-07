@@ -2,6 +2,10 @@ html, body {
   height: 100%;
   margin: 0;
 }
+body, .profile-container {
+  background: linear-gradient(to right, #3c1053, #ad5389);
+  min-height: 100vh;
+}
 
 #__next {
   display: flex;
@@ -15,6 +19,7 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+ 
 }
 
 /* Push footer to bottom */

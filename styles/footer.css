@@ -1,6 +1,26 @@
 .footer {
-  background-color: #f8f9fa;
-  padding: 20px 0 10px; /* reduce bottom padding if needed */
-  text-align: center;
-  border-top: 1px solid #ddd;
+  background-color: #1a1a1a;
+  color: white;
+}
+.footer a {
+  color: #9f5bd0;
+}
+.footer-bottom {
+  background-color: #111;
+}
+
+
+.btn-purple {
+  background: #6a0dad;
+  color: white;
+  transition: 0.3s;
+}
+.btn-purple:hover {
+  background: linear-gradient(to right, #9f5bd0, #6a0dad);
+}
+
+
+.footer a:hover {
+  color: #ffffff;
+  text-decoration: underline;
 }
