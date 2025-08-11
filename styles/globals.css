@@ -151,3 +151,66 @@ input {
   justify-content: space-between;
   margin-top: 1rem;
 }
+
+
+
+
+ /* subtle hover lift */
+.shadow-lg { transition: transform .2s ease, box-shadow .2s ease; }
+.shadow-lg:hover { transform: translateY(-4px); }
+/* make Clerk links match Bootstrap theme on hover */
+.cl-formButtonPrimary:hover { filter: brightness(0.95); }
+/* responsive tweak */
+@media (max-width: 576px) {
+  .cl-card { box-shadow: none !important; }
+}
+
+
+
+/* ===== Auth screens (Bootstrap friendly) ===== */
+.auth-hero {
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 10% 10%, #1f1b2e 0%, #0f1020 55%, #0a0b15 100%),
+              linear-gradient(135deg, rgba(103,58,183,.25), rgba(33,150,243,.15));
+  padding: 2rem 0;
+}
+.glass-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.06);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.glass-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
+
+.auth-link {
+  color: #8ab4ff !important;
+  text-decoration: none;
+}
+.auth-link:hover { text-decoration: underline; }
+
+/* simple ripple + rise hover for buttons */
+.ripple { position: relative; overflow: hidden; }
+.ripple:after {
+  content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.2);
+  opacity: 0; transform: scale(0); transition: transform .4s, opacity .4s;
+}
+.ripple:active:after { opacity: 1; transform: scale(1); transition: 0s; }
+
+.hover-rise { transition: transform .2s ease, box-shadow .2s ease; }
+.hover-rise:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.25); }
+
+/* subtle entrance */
+.fade-in { animation: fadeInUp .5s ease both; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Clerk card fine-tunes (optional) */
+.cl-card { background: transparent !important; box-shadow: none !important; }
+
+/* Mobile tweaks */
+@media (max-width: 576px) {
+  .glass-card { padding: 1.25rem !important; }
+}

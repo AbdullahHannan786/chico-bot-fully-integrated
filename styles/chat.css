@@ -1,0 +1,93 @@
+/* === chat.css start === */
+.chat-wrapper { max-width: 900px; }
+
+.chat-card {
+  border: 1px solid rgba(0,0,0,.06);
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0f1117 0%, #141824 100%);
+  color: #eaeefb;
+}
+
+.chat-body {
+  height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+  background:
+    radial-gradient(1200px 200px at 10% -10%, rgba(88,101,242,0.1), transparent 60%),
+    radial-gradient(800px 200px at 90% -10%, rgba(0,173,181,0.08), transparent 60%);
+}
+
+.chat-input-bar {
+  background: rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.chat-row {
+  display: flex;
+  margin-bottom: .75rem;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: .6rem .8rem;
+  border-radius: 14px;
+  line-height: 1.4;
+  font-size: .98rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
+  animation: fadeIn .25s ease-in;
+}
+
+.bubble-user {
+  background: linear-gradient(135deg, #5865f2, #00adb5);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble-bot {
+  background: rgba(255,255,255,0.08);
+  color: #eaeefb;
+  border-bottom-left-radius: 4px;
+}
+
+.bubble-pop { animation: pop .18s ease-out; }
+
+.chat-input {
+  border-radius: 10px 0 0 10px !important;
+  background: rgba(255,255,255,0.06);
+  color: #eaeefb;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.chat-input::placeholder { color: #9aa4c6; }
+
+.hover-lift {
+  transition: transform .15s ease, box-shadow .15s ease;
+  border-radius: 0 10px 10px 0 !important;
+}
+.hover-lift:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+
+.hover-float {
+  transition: transform .15s ease, background .15s ease;
+}
+.hover-float:hover { transform: translateY(-1px); }
+
+.typing {
+  display: inline-flex; gap: 4px; align-items: center;
+}
+.typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #c9d1ff; display: inline-block;
+  animation: bounce 1s infinite;
+}
+.typing span:nth-child(2){ animation-delay: .15s; }
+.typing span:nth-child(3){ animation-delay: .3s; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes pop { 0%{ transform: scale(.98) } 100%{ transform: scale(1) } }
+@keyframes bounce { 0%,80%,100%{ transform: translateY(0); opacity:.6 } 40%{ transform: translateY(-4px); opacity:1 } }
+
+@media (max-width: 768px) {
+  .chat-body { height: 65vh; }
+  .chat-bubble { max-width: 90%; font-size: .95rem; }
+}
+/* === chat.css end === */

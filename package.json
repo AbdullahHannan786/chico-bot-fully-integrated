@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.30.0",
+    "@react-three/drei": "^10.6.1",
+    "@react-three/fiber": "^9.3.0",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.7",
@@ -20,6 +23,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-easy-crop": "^5.5.0",
-    "react-hot-toast": "^2.5.2"
+    "react-hot-toast": "^2.5.2",
+    "three": "^0.179.1"
   }
 }
