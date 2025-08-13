@@ -1,26 +1,51 @@
-.nav-link {
-  color: white !important;
-  margin: 0 10px;
-  font-weight: 500;
-  transition: all 0.3s ease;
+/* Navbar: gradient, hover, and Start Chat button */
+
+
+.navbar {
+  background: linear-gradient(90deg, rgba(14,165,233,.10), rgba(29,78,216,.10));
+  padding: 10px 20px;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(8px);
 }
 
+.nav-link {
+  color: #8ab4ff !important;
+  margin: 0 10px;
+  font-weight: 600;
+  transition: color .2s ease, transform .2s ease, text-decoration .2s ease;
+}
 .nav-link:hover {
-  color: #ffc107 !important; /* yellowish hover */
+  color: #ffffff !important;
+  transform: translateY(-1px);
   text-decoration: underline;
 }
 
-.navbar {
-  background: linear-gradient(to right, #3c1053, #ad5389);
-  padding: 10px 20px;
+/* show active underline */
+.nav-link.active { border-bottom: 2px solid #0ea5e9; padding-bottom: 4px; color:#fff !important; }
+
+.navbar .logout { color: #ff9aa7 !important; font-weight: 700; }
+.navbar .logout:hover { color: #ff5c74 !important; }
+
+/* Start Chat button */
+.btn-start-chat {
+  background: #0ea5e9;
+  color: #081326 !important;
+  border-radius: 999px;
+  padding: .45rem 1rem !important;
+  font-weight: 800;
+  box-shadow: 0 10px 26px rgba(14,165,233,.35);
   border: none;
 }
+.btn-start-chat:hover { filter: brightness(1.05); transform: translateY(-1px); }
 
-.navbar .logout {
-  color: #ff9999 !important; /* soft red */
-  font-weight: bold;
+/* quick hide until you remove them from JSX */
+.nav-link[href="/about"], .nav-link[href="/contact"] { display:none !important; }
+
+/* responsive spacing */
+@media (max-width: 768px){
+  .navbar .btn-start-chat { margin-top: .5rem; }
 }
 
-.navbar .logout:hover {
-  color: #ff4d4d !important;
-}
+
+

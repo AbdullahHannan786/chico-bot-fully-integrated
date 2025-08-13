@@ -1,53 +1,44 @@
-import cloudinary from 'cloudinary';
 import formidable from 'formidable';
 import fs from 'fs';
+import path from 'path';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
-  const form = formidable({ keepExtensions: true });
+  const uploadDir = path.join(process.cwd(), '/public/uploads/avatars');
+  fs.mkdirSync(uploadDir, { recursive: true });
 
-  form.parse(req, async (err, fields, files) => {
-    try {
-      if (err) throw err;
+  const form = formidable({
+    uploadDir,
+    keepExtensions: true,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    multiples: false,
+  });
 
-      const file = files.avatar?.[0];
-      const email = fields.email?.[0];
-      const oldPublicId = fields.oldPublicId?.[0];
-
-      if (!file || !email) return res.status(400).json({ error: 'Missing file or email' });
-
-      // 1. Delete old avatar if publicId provided
-      if (oldPublicId) {
-        await cloudinary.v2.uploader.destroy(oldPublicId);
-      }
-
-      // 2. Upload new avatar
-      const result = await cloudinary.v2.uploader.upload(file.filepath, {
-        folder: 'avatars',
-        public_id: `avatar-${Date.now()}`,
-        transformation: [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }],
-      });
-
-      return res.status(200).json({
-        url: result.secure_url,
-        public_id: result.public_id,
-      });
-    } catch (e) {
-      console.error('Upload error:', e);
-      return res.status(500).json({ error: 'Upload failed' });
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(500).json({ message: 'File upload failed' });
     }
+
+    // Accept either 'avatar' or 'file'
+    const candidate = files.avatar ?? files.file;
+    if (!candidate) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const file = Array.isArray(candidate) ? candidate[0] : candidate;
+    // formidable v3 puts absolute path on file.filepath
+    const absolute = file.filepath || file.filePath || file.path;
+    if (!absolute) {
+      return res.status(500).json({ message: 'Could not determine file path' });
+    }
+
+    const publicUrl = `/uploads/avatars/${path.basename(absolute)}`;
+    return res.status(200).json({ url: publicUrl });
   });
 }

@@ -1,26 +1,23 @@
 .footer {
-  background-color: #1a1a1a;
-  color: white;
-}
-.footer a {
-  color: #9f5bd0;
-}
-.footer-bottom {
-  background-color: #111;
+  background-color: #0b1220;
+  color: #eaf2ff;
+  margin-top: 0;            /* prevent extra gap */
+  border-top: 1px solid rgba(255,255,255,.08);
 }
 
+.footer a { color: #8ab4ff; }
+.footer a:hover { color: #ffffff; text-decoration: underline; }
+
+.footer-bottom {
+  background-color: #081326;
+  color: #b7c9ff;
+  padding: .75rem 0;
+  margin: 0;               /* kill any default margins */
+}
 
 .btn-purple {
   background: #6a0dad;
   color: white;
-  transition: 0.3s;
+  transition: .3s;
 }
-.btn-purple:hover {
-  background: linear-gradient(to right, #9f5bd0, #6a0dad);
-}
-
-
-.footer a:hover {
-  color: #ffffff;
-  text-decoration: underline;
-}
+.btn-purple:hover { background: linear-gradient(to right, #9f5bd0, #6a0dad); }

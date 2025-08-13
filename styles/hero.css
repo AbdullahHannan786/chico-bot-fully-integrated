@@ -1,10 +1,10 @@
-/* hero.css – Mixamo-style landing */
+/* Mixamo-style landing with entrance animations */
 
 .hero-container {
   background-image: url("/hero.jpg");
-  background-size: cover;           /* ✅ fill screen */
+  background-size: cover;
   background-repeat: no-repeat;
-  background-position: center top;  /* ✅ align properly */
+  background-position: center top;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -15,103 +15,68 @@
 }
 
 .hero-overlay {
-  background: rgba(0, 0, 0, 0.65);   /* dark semi-transparent background */
-  padding: 3rem;
+  background: rgba(0, 0, 0, 0.6);
+  padding: clamp(1.5rem, 3vw, 3rem);
   border-radius: 25px;
   color: white;
-  max-width: 700px;
+  max-width: 760px;
   width: 100%;
   text-align: center;
-  animation: fadeInUp 0.7s ease-in-out both;
+  animation: fadeInUp .7s ease both;
 }
 
 .hero-heading {
-  font-size: 2.8rem;
-  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
   margin-bottom: 1.2rem;
   animation: fadeInDown 1s ease forwards;
 }
 
 .hero-desc {
-  font-size: 1.1rem;
-  line-height: 1.6;
+  font-size: 1.05rem;
+  line-height: 1.7;
   margin-bottom: 2rem;
+  color: #f4f7ff;
   animation: fadeInDown 1s ease forwards;
-  animation-delay: 0.3s;
+  animation-delay: .25s;
 }
 
 .hero-buttons {
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: .8rem;
   flex-wrap: wrap;
 }
 
 .hero-btn,
 .hero-btn-outline {
-  padding: 0.8rem 1.5rem;
+  padding: .85rem 1.5rem;
   font-size: 1rem;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 999px;
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
 }
 
 .hero-btn {
-  background-color: #3c1053;
-  color: white;
+  background-color: #0ea5e9;
+  color: #081326;
+  box-shadow: 0 12px 30px rgba(14,165,233,.35);
   animation: fadeIn 1s ease forwards;
-  animation-delay: 0.6s;
+  animation-delay: .6s;
 }
-
-.hero-btn:hover {
-  background-color: #2b0845;
-}
+.hero-btn:hover { transform: translateY(-2px); box-shadow:0 18px 38px rgba(14,165,233,.55); }
 
 .hero-btn-outline {
   background: transparent;
   border: 2px solid white;
   color: white;
   animation: fadeIn 1s ease forwards;
-  animation-delay: 0.9s;
+  animation-delay: .85s;
 }
+.hero-btn-outline:hover { background:#fff; color:#0a0b15; }
 
-.hero-btn-outline:hover {
-  background: white;
-  color: #3c1053;
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-
+@keyframes fadeInUp { from{opacity:0; transform: translateY(40px);} to{opacity:1; transform:none;} }
+@keyframes fadeInDown { from{opacity:0; transform: translateY(-30px);} to{opacity:1; transform:none;} }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }

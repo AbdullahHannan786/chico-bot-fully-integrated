@@ -1,216 +1,112 @@
-html, body {
-  height: 100%;
-  margin: 0;
-}
-body, .profile-container {
-  background: linear-gradient(to right, #3c1053, #ad5389);
-  min-height: 100vh;
-}
-
-#__next {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
 
 
-/* Ensure main grows and footer sticks to bottom */
-.main-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
- 
+
+
+:root{
+  --bg-grad-1:#0f1020;
+  --bg-grad-2:#0a0b15;
+  --card:#0b1220;
+  --text:#eaf2ff;
+  --muted:#b7c9ff;
+  --link:#8ab4ff;
+  --link-hover:#ffffff;
+  --accent:#0ea5e9;
 }
 
-/* Push footer to bottom */
-.main-wrapper > *:last-child {
-  margin-top: auto;
+html, body { height: 100%; }
+body{
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  background: linear-gradient(180deg,var(--bg-grad-1),var(--bg-grad-2));
+  color:var(--text);
 }
 
-main {
-  flex-grow: 1;
+/* layout: keep footer stuck to bottom with no extra space */
+main { flex: 1 0 auto; }
+.footer { flex-shrink: 0; }
+
+/* Navbar (dark glass) */
+.navbar.chiko-nav{
+  background: linear-gradient(90deg,rgba(14,165,233,.10),rgba(29,78,216,.10));
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.navbar.chiko-nav .nav-link,
+.navbar.chiko-nav .navbar-brand{
+  color:var(--link);
+  transition: transform .2s ease, color .2s ease;
+}
+.navbar.chiko-nav .nav-link:hover,
+.navbar.chiko-nav .navbar-brand:hover{
+  color:var(--link-hover);
+  transform: translateY(-1px);
 }
 
-
-
-.index-header-welcm{
-  color: darkcyan;
+/* Make “Start Chat” look like a primary button in navbar */
+.navbar .btn-start-chat {
+  background: var(--accent);
+  color: #081326 !important;
+  border-radius: 999px;
+  padding: .45rem 1rem;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(14,165,233,.35);
 }
-.nav-link.active {
-  border-bottom: 2px solid #0d6efd; /* Bootstrap primary color */
-  padding-bottom: 4px;
-  transition: all 0.2s ease;
+.navbar .btn-start-chat:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+/* (Optional) hide About/Contact quickly if you haven’t removed them in JSX yet */
+.navbar .nav-link[href="/about"],
+.navbar .nav-link[href="/contact"] { display: none !important; }
+
+/* Cards/inputs/buttons */
+.card.chiko{
+  background: radial-gradient(1100px 200px at 10% -10%, rgba(56,189,248,0.12), transparent 60%),
+              radial-gradient(800px 200px at 90% -10%, rgba(14,165,233,0.10), transparent 60%),
+              var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--text);
+  border-radius:18px;
 }
-
- /* form transition below  */
-form {
-  transition: all 0.3s ease-in-out;
+.form-control{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);
+  color:var(--text);
 }
+.form-control::placeholder{ color:var(--muted); }
 
-form:hover {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.chiko-btn{
+  background:var(--accent);
+  color:#031225;
+  border:none;
+  box-shadow:0 8px 24px rgba(14,165,233,.35);
+  transition: transform .15s ease, box-shadow .2s ease;
 }
+.chiko-btn:hover{ transform: translateY(-1px); box-shadow:0 12px 28px rgba(14,165,233,.5); }
 
-.login-button{
-  margin-left: 20px;
-}
-
-.nav-link.active {
-  border-bottom: 2px solid #ff5722;
-  color: #ff5722 !important;
-  font-weight: bold;
-}
-
-.custom-toggler-icon {
-  font-size: 1.5rem;
-  color: #333;
-  background: none;
-}
-
-
-/* // profile css // */
-/* Profile page layout */
-.profile-page {
-  padding: 2rem;
-  max-width: 800px;
-  margin: auto;
-}
-
+/* Profile page readability (your screenshot text looked washed out) */
+.profile-container { background: transparent; }
 .profile-card {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 0 12px rgba(0,0,0,0.05);
+  background:#0b1220;
+  color:#eaf2ff;
+  border:1px solid rgba(255,255,255,.08);
 }
+.profile-info h2 { color:#ffffff !important; font-weight:800; }
+.profile-info p b, .profile-info p strong { color:#cfe0ff; }
+.profile-info p { color:#e0e7ff; }
 
-.avatar-section {
-  flex: 1 1 150px;
-  text-align: center;
-}
+/* Scroll-reveal (shared) */
+.reveal { opacity:0; transform:translateY(26px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:none; }
+.reveal-left { transform:translateX(-26px); }
+.reveal-right { transform:translateX(26px); }
 
-.avatar-img {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 1rem;
-}
+@keyframes fadeInUp { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform:none;} }
+.fade-in { animation: fadeInUp .5s ease both; }
 
-.info-section {
-  flex: 2 1 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-input {
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.loading-profile {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-/* Crop modal */
-.crop-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backdrop-filter: blur(4px);
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.crop-container {
-  position: relative;
-  width: 90%;
-  max-width: 400px;
-  height: 400px;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.crop-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
-}
-
-
-
-
- /* subtle hover lift */
+/* small helpers */
 .shadow-lg { transition: transform .2s ease, box-shadow .2s ease; }
 .shadow-lg:hover { transform: translateY(-4px); }
-/* make Clerk links match Bootstrap theme on hover */
-.cl-formButtonPrimary:hover { filter: brightness(0.95); }
-/* responsive tweak */
-@media (max-width: 576px) {
-  .cl-card { box-shadow: none !important; }
-}
 
 
 
-/* ===== Auth screens (Bootstrap friendly) ===== */
-.auth-hero {
-  min-height: 100vh;
-  background: radial-gradient(1200px 600px at 10% 10%, #1f1b2e 0%, #0f1020 55%, #0a0b15 100%),
-              linear-gradient(135deg, rgba(103,58,183,.25), rgba(33,150,243,.15));
-  padding: 2rem 0;
-}
-.glass-card {
-  backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.06);
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  transition: transform .25s ease, box-shadow .25s ease;
-}
-.glass-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,.35); }
-
-.auth-link {
-  color: #8ab4ff !important;
-  text-decoration: none;
-}
-.auth-link:hover { text-decoration: underline; }
-
-/* simple ripple + rise hover for buttons */
-.ripple { position: relative; overflow: hidden; }
-.ripple:after {
-  content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.2);
-  opacity: 0; transform: scale(0); transition: transform .4s, opacity .4s;
-}
-.ripple:active:after { opacity: 1; transform: scale(1); transition: 0s; }
-
-.hover-rise { transition: transform .2s ease, box-shadow .2s ease; }
-.hover-rise:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.25); }
-
-/* subtle entrance */
-.fade-in { animation: fadeInUp .5s ease both; }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Clerk card fine-tunes (optional) */
-.cl-card { background: transparent !important; box-shadow: none !important; }
-
-/* Mobile tweaks */
-@media (max-width: 576px) {
-  .glass-card { padding: 1.25rem !important; }
-}
