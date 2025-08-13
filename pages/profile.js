@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
@@ -24,7 +25,6 @@ export default function Profile() {
         const form = data.forms?.[0];
 
         if (!form) {
-          // New user, no form yet
           setUserData(null);
           setFormData({
             name: session.user.name || "",
@@ -62,239 +62,220 @@ export default function Profile() {
     setFormData(userData || {});
   };
 
- const handleSave = async () => {
-  if (
-    !formData.name ||
-    !formData.phone ||
-    !formData.city ||
-    !formData.degree ||
-    !formData.age
-  ) {
-    toast.error('All fields are required');
-    return;
-  }
-
-  const payload = {
-    ...formData,
-    userId: session.user.id,
-    avatarUrl: avatarPreview,
-  };
-
-  try {
-    // First try PUT (update)
-    let res = await fetch('/api/forms', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    let data = await res.json();
-
-    // If PUT fails due to missing form, fallback to POST
-    if (!res.ok && data.message === 'Form not found') {
-      res = await fetch('/api/forms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      data = await res.json();
+  const handleSave = async () => {
+    if (!formData.name || !formData.phone || !formData.city || !formData.degree || !formData.age) {
+      toast.error("All fields are required");
+      return;
     }
 
-    if (!res.ok) throw new Error(data.message || 'Update failed');
+    const payload = {
+      ...formData,
+      userId: session.user.id,
+      avatarUrl: avatarPreview,
+    };
 
-    setUserData(data.form);
-    setEditing(false);
-    toast.success('Profile saved');
-  } catch (err) {
-    console.error('Profile update error:', err);
-    toast.error('Update failed');
-  }
-};
+    try {
+      let res = await fetch("/api/forms", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      let data = await res.json();
 
+      if (!res.ok && data.message === "Form not found") {
+        res = await fetch("/api/forms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        data = await res.json();
+      }
 
-const handleAvatarUpload = async () => {
-  const userId = session?.user?.id;
-  if (!userId) {
-    toast.error("Please save your profile before uploading an avatar.");
-    return;
-  }
+      if (!res.ok) throw new Error(data.message || "Update failed");
 
-  if (!avatarFile) return toast.error("Please choose a file");
+      setUserData(data.form);
+      setEditing(false);
+      toast.success("Profile saved");
+    } catch (err) {
+      console.error("Profile update error:", err);
+      toast.error("Update failed");
+    }
+  };
 
-  const formDataUpload = new FormData();
-  formDataUpload.append('avatar', avatarFile);
-  formDataUpload.append('email', session.user.email);
-  if (userData?.avatarPublicId) {
-    formDataUpload.append('oldPublicId', userData.avatarPublicId); // 🧨 Send old avatar to delete
-  }
+  const handleAvatarUpload = async () => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      toast.error("Please save your profile before uploading an avatar.");
+      return;
+    }
+    if (!avatarFile) return toast.error("Please choose a file");
 
-  setUploading(true);
-  try {
-    const res = await fetch('/api/upload-avatar', {
-      method: 'POST',
-      body: formDataUpload,
-    });
+    const formDataUpload = new FormData();
+    formDataUpload.append("avatar", avatarFile);
+    formDataUpload.append("email", session.user.email);
+    if (userData?.avatarPublicId) {
+      formDataUpload.append("oldPublicId", userData.avatarPublicId);
+    }
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    setUploading(true);
+    try {
+      const res = await fetch("/api/upload-avatar", {
+        method: "POST",
+        body: formDataUpload,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
 
-    toast.success('Avatar uploaded');
+      toast.success("Avatar uploaded");
 
-    // 💾 Save new avatar to form data
-    const saveRes = await fetch('/api/forms', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...formData,
-        userId,
-        avatarUrl: data.url,
-        avatarPublicId: data.public_id,
-      }),
-    });
+      const saveRes = await fetch("/api/forms", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          userId,
+          avatarUrl: data.url,
+          avatarPublicId: data.public_id,
+        }),
+      });
 
-    const saveData = await saveRes.json();
-    if (!saveRes.ok) throw new Error(saveData.message || 'Save failed');
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.message || "Save failed");
 
-    setAvatarPreview(data.url);
-    setUserData(saveData.form);
-    setFormData(saveData.form);
-  } catch (err) {
-    console.error(err);
-    toast.error('Upload failed');
-  } finally {
-    setUploading(false);
-  }
-};
-
-
-
+      setAvatarPreview(data.url);
+      setUserData(saveData.form);
+      setFormData(saveData.form);
+    } catch (err) {
+      console.error(err);
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "300px" }}
-      >
+      <main className="page-shell d-flex justify-content-center align-items-center">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="profile-container">
-      <div className="profile-card">
-        <div className="profile-header">
-          <img
-            src={avatarPreview || "/default-avatar.png"}
-            alt="avatar"
-            className="profile-avatar"
-          />
+    <main className="page-shell">
+      <div className="profile-container">
+        <div className="profile-card animate-fade-up">
+          <div className="profile-header">
+            {/* Avatar — Next/Image for sharper rendering */}
+            <div className="avatar-ring">
+              <Image
+                src={avatarPreview || "/default-avatar.png"}
+                alt="avatar"
+                width={160}
+                height={160}
+                className="profile-avatar avatar-sharp"
+                priority
+              />
+            </div>
 
-          <div className="profile-info">
-            <h2>{formData.name || "Name not set"}</h2>
-            <p>
-              <strong>Phone:</strong>{" "}
+            <div className="profile-info">
+              <h2>{formData.name || "Name not set"}</h2>
+
+              <p>
+                <strong>Phone:</strong>{" "}
+                {editing ? (
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  formData.phone || "Not set"
+                )}
+              </p>
+              <p>
+                <strong>City:</strong>{" "}
+                {editing ? (
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  formData.city || "Not set"
+                )}
+              </p>
+              <p>
+                <strong>Degree:</strong>{" "}
+                {editing ? (
+                  <input
+                    type="text"
+                    name="degree"
+                    value={formData.degree}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  formData.degree || "Not set"
+                )}
+              </p>
+              <p>
+                <strong>Age:</strong>{" "}
+                {editing ? (
+                  <input
+                    type="number"
+                    name="age"
+                    value={formData.age}
+                    onChange={handleChange}
+                  />
+                ) : formData.age ? (
+                  `${formData.age} years`
+                ) : (
+                  "Not set"
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="avatar-upload">
+            {editing && (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setAvatarFile(e.target.files[0])}
+                className="avatar-file-input"
+              />
+            )}
+
+            <div className="profile-buttons">
               {editing ? (
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                />
+                <>
+                  <button
+                    onClick={handleAvatarUpload}
+                    className="upload-btn"
+                    disabled={uploading}
+                  >
+                    {uploading ? "Uploading..." : "Upload Avatar"}
+                  </button>
+                  <button className="cancel-btn" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                  <button className="save-btn" onClick={handleSave}>
+                    Save Profile
+                  </button>
+                </>
               ) : (
-                formData.phone || "Not set"
+                <button className="upload-btn" onClick={handleEditToggle}>
+                  Edit Details
+                </button>
               )}
-            </p>
-            <p>
-              <strong>City:</strong>{" "}
-              {editing ? (
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                />
-              ) : (
-                formData.city || "Not set"
-              )}
-            </p>
-            <p>
-              <strong>Degree:</strong>{" "}
-              {editing ? (
-                <input
-                  type="text"
-                  name="degree"
-                  value={formData.degree}
-                  onChange={handleChange}
-                />
-              ) : (
-                formData.degree || "Not set"
-              )}
-            </p>
-            <p>
-              <strong>Age:</strong>{" "}
-              {editing ? (
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChange}
-                />
-              ) : formData.age ? (
-                `${formData.age} years`
-              ) : (
-                "Not set"
-              )}
-            </p>
+            </div>
           </div>
         </div>
-
-  
-
-<div className="avatar-upload">
-  {editing && (
-    <input
-      type="file"
-      onChange={(e) => setAvatarFile(e.target.files[0])}
-      className="avatar-file-input"
-    />
-  )}
-
-  <div className="profile-buttons">
-    {editing ? (
-      <>
-        <button
-          onClick={() => {
-            const userId = session?.user?.id;
-            if (!userId) {
-              toast.error("Please save your profile before uploading an avatar.");
-              return;
-            }
-            handleAvatarUpload();
-          }}
-          className="upload-btn"
-          disabled={uploading}
-        >
-          {uploading ? "Uploading..." : "Upload Avatar"}
-        </button>
-        <button className="cancel-btn" onClick={handleCancel}>
-          Cancel
-        </button>
-        <button className="save-btn" onClick={handleSave}>
-          Save Profile
-        </button>
-      </>
-    ) : (
-      <button className="upload-btn" onClick={handleEditToggle}>
-        Edit Details
-      </button>
-    )}
-  </div>
-</div>
-
       </div>
-    </div>
+    </main>
   );
 }

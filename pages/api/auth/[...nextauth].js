@@ -1,4 +1,3 @@
-// pages/api/auth/[...nextauth].js
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import User from '../../../models/User';
@@ -12,8 +11,9 @@ export const authOptions = {
         await dbConnect();
         const user = await User.findOne({ email: credentials.email });
         if (!user) throw new Error('No user found');
-        const ok = await bcrypt.compare(credentials.password, user.password);
-        if (!ok) throw new Error('Invalid password');
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) throw new Error('Invalid password');
 
         return {
           id: user._id.toString(),

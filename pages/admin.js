@@ -1,27 +1,36 @@
 import { useSession, signOut } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [submissions, setSubmissions] = useState([]);
+
+  const [rows, setRows] = useState([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const fetchAllForms = async (showToast = true) => {
+  const query = useMemo(() => new URLSearchParams({ page, limit, q: search }).toString(), [page, limit, search]);
+
+  const fetchForms = async (notify = false) => {
     try {
-      const res = await fetch('/api/admin/forms', {
+      setLoading(true);
+      const res = await fetch(`/api/admin/forms?${query}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // make sure session cookie is sent
+        credentials: 'include',
       });
 
-      // handle common auth errors clearly
       if (res.status === 401) {
-        toast.error('Your session expired. Please log in again.');
+        toast.error('Session expired. Please log in again.');
         await signOut({ redirect: false });
         router.push('/login');
         return;
@@ -34,59 +43,68 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setSubmissions(data.forms || []);
-        if (showToast) toast.success('Forms fetched successfully!');
+        setRows(data.forms || []);
+        setPages(data.pages || 1);
+        setTotal(data.total || 0);
+        if (notify) toast.success('Loaded.');
       } else {
         toast.error(data.message || 'Failed to load forms');
       }
-    } catch (error) {
-      toast.error('An error occurred while fetching forms');
+    } catch {
+      toast.error('Error loading forms');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // auth gate + initial load
   useEffect(() => {
     if (status === 'authenticated') {
-      if (session?.user?.role === 'admin') {
-        fetchAllForms();
-      } else {
-        router.replace('/');
-      }
+      if (session?.user?.role === 'admin') fetchForms();
+      else router.replace('/');
     }
-  }, [session, status]);
+  }, [status, session, page, limit]); // re-run on pagination change
+
+  // refetch when search stops typing
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1); // reset to first page for new search
+      fetchForms();
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const handleDelete = async (id) => {
-    const confirmed = window.confirm('Are you sure you want to delete this form?');
-    if (!confirmed) return;
-
+    if (!window.confirm('Delete this form?')) return;
     try {
       const res = await fetch(`/api/forms/${id}`, { method: 'DELETE', credentials: 'include' });
       const data = await res.json().catch(() => ({}));
-
       if (res.ok) {
-        toast.success('Form deleted successfully!');
-        fetchAllForms(false);
+        toast.success('Form deleted');
+        // if we deleted the last item on last page, move back one page
+        if (rows.length === 1 && page > 1) setPage(p => p - 1);
+        else fetchForms(false);
       } else {
-        toast.error(data.message || 'Failed to delete form');
+        toast.error(data.message || 'Delete failed');
       }
     } catch {
-      toast.error('An error occurred while deleting');
+      toast.error('Delete error');
     }
   };
 
-  const handleEditClick = (form) => {
-    setEditId(form._id);
+  const handleEditClick = (row) => {
+    setEditId(row._id);
     setEditForm({
-      name: form.name || '',
-      age: form.age || '',
-      city: form.city || '',
-      degree: form.degree || '',
-      phone: form.phone || '',
+      name: row.name || '',
+      age: row.age || '',
+      city: row.city || '',
+      degree: row.degree || '',
+      phone: row.phone || '',
     });
   };
 
-  const handleEditChange = (e) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
-  };
+  const handleEditChange = (e) => setEditForm({ ...editForm, [e.target.name]: e.target.value });
 
   const handleEditSave = async () => {
     try {
@@ -96,17 +114,16 @@ export default function AdminPage() {
         credentials: 'include',
         body: JSON.stringify(editForm),
       });
-
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success('Form updated successfully!');
+        toast.success('Updated');
         setEditId(null);
-        fetchAllForms(false);
+        fetchForms(false);
       } else {
-        toast.error(data.message || 'Failed to update form');
+        toast.error(data.message || 'Update failed');
       }
     } catch {
-      toast.error('An error occurred while updating form');
+      toast.error('Update error');
     }
   };
 
@@ -114,89 +131,119 @@ export default function AdminPage() {
   if (!session || session.user.role !== 'admin') return null;
 
   return (
-    <div className="container mt-5">
-      <h2 className="mb-4">Admin Panel — All User Submissions</h2>
+    <div className="container py-4">
+      <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
+        <h2 className="m-0">Admin Panel — All User Submissions</h2>
 
-      <input
-        type="text"
-        className="form-control mb-4"
-        placeholder="Search by name, city, or degree..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+        <div className="d-flex gap-2 align-items-center">
+          <input
+            type="text"
+            className="form-control"
+            style={{ minWidth: 260 }}
+            placeholder="Search name, city, degree, phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className="form-select"
+            style={{ width: 110 }}
+            value={limit}
+            onChange={(e) => setLimit(parseInt(e.target.value, 10))}
+            title="Rows per page"
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+            <option value={50}>50 / page</option>
+          </select>
+        </div>
+      </div>
 
-      {submissions.length === 0 && <p>No submissions yet.</p>}
+      <div className="mb-2 text-muted small">
+        {loading ? 'Loading…' : `Showing ${rows.length} of ${total} result(s)`}
+      </div>
 
-      {submissions
-        .filter((item) => {
-          const term = search.toLowerCase();
-          return (
-            (item.name || '').toLowerCase().includes(term) ||
-            (item.city || '').toLowerCase().includes(term) ||
-            (item.degree || '').toLowerCase().includes(term)
-          );
-        })
-        .map((item) => (
-          <div key={item._id} className="border rounded p-3 mb-3">
-            {editId === item._id ? (
-              <div>
-                <input
-                  className="form-control mb-2"
-                  name="name"
-                  value={editForm.name}
-                  onChange={handleEditChange}
-                />
-                <input
-                  className="form-control mb-2"
-                  name="age"
-                  type="number"
-                  value={editForm.age}
-                  onChange={handleEditChange}
-                />
-                <input
-                  className="form-control mb-2"
-                  name="city"
-                  value={editForm.city}
-                  onChange={handleEditChange}
-                />
-                <input
-                  className="form-control mb-2"
-                  name="degree"
-                  value={editForm.degree}
-                  onChange={handleEditChange}
-                />
-                <input
-                  className="form-control mb-2"
-                  name="phone"
-                  value={editForm.phone}
-                  onChange={handleEditChange}
-                />
+      {rows.length === 0 && !loading && <p className="text-secondary">No submissions found.</p>}
 
-                <button className="btn btn-success btn-sm me-2" onClick={handleEditSave}>
-                  Save
-                </button>
-                <button className="btn btn-secondary btn-sm" onClick={() => setEditId(null)}>
-                  Cancel
-                </button>
+      {rows.map((item) => (
+        <div
+          key={item._id}
+          className="border rounded p-3 mb-3 bg-dark text-light"
+          style={{ transition: 'transform .2s, box-shadow .2s' }}
+          onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,.35)')}
+          onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
+        >
+          {editId === item._id ? (
+            <div className="row g-2">
+              <div className="col-12 col-md-4">
+                <input className="form-control" name="name" value={editForm.name} onChange={handleEditChange} />
               </div>
-            ) : (
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{item.name}</strong> | Age: {item.age} | City: {item.city} | Degree:{' '}
-                  {item.degree} | Phone: {item.phone}
-                </div>
-                <div>
-                  <button className="btn btn-warning btn-sm me-2 mb-1" onClick={() => handleEditClick(item)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item._id)}>
-                    Delete
-                  </button>
-                </div>
+              <div className="col-6 col-md-2">
+                <input className="form-control" type="number" name="age" value={editForm.age} onChange={handleEditChange} />
               </div>
-            )}
-          </div>
-        ))}
+              <div className="col-6 col-md-2">
+                <input className="form-control" name="city" value={editForm.city} onChange={handleEditChange} />
+              </div>
+              <div className="col-12 col-md-2">
+                <input className="form-control" name="degree" value={editForm.degree} onChange={handleEditChange} />
+              </div>
+              <div className="col-12 col-md-2">
+                <input className="form-control" name="phone" value={editForm.phone} onChange={handleEditChange} />
+              </div>
+
+              <div className="col-12 d-flex gap-2 mt-2">
+                <button className="btn btn-success btn-sm" onClick={handleEditSave}>Save</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditId(null)}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div className="d-flex flex-column flex-md-row justify-content-between gap-2 align-items-start align-items-md-center">
+              <div className="pe-md-3">
+                <strong className="text-info">{item.name}</strong>
+                <span className="ms-2">| Age: {item.age}</span>
+                <span className="ms-2">| City: {item.city}</span>
+                <span className="ms-2">| Degree: {item.degree}</span>
+                <span className="ms-2">| Phone: {item.phone}</span>
+              </div>
+              <div className="d-flex gap-2">
+                <button className="btn btn-warning btn-sm" onClick={() => handleEditClick(item)}>Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item._id)}>Delete</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Pagination */}
+      <nav aria-label="Forms pagination">
+        <ul className="pagination justify-content-center mt-3">
+          <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+            <button className="page-link" onClick={() => setPage(1)} aria-label="First">«</button>
+          </li>
+          <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+            <button className="page-link" onClick={() => setPage(p => Math.max(p - 1, 1))} aria-label="Previous">‹</button>
+          </li>
+
+          {/* show up to 5 page buttons centered around current */}
+          {Array.from({ length: pages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === pages || Math.abs(p - page) <= 2)
+            .map((p, idx, arr) => (
+              <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                {idx < arr.length - 1 && arr[idx + 1] - p > 1 && (
+                  <span className="page-link disabled border-0">…</span>
+                )}
+              </li>
+            ))}
+
+          <li className={`page-item ${page >= pages ? 'disabled' : ''}`}>
+            <button className="page-link" onClick={() => setPage(p => Math.min(p + 1, pages))} aria-label="Next">›</button>
+          </li>
+          <li className={`page-item ${page >= pages ? 'disabled' : ''}`}>
+            <button className="page-link" onClick={() => setPage(pages)} aria-label="Last">»</button>
+          </li>
+        </ul>
+      </nav>
     </div>
   );
 }
