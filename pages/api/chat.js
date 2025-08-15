@@ -22,7 +22,14 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { message } = req.body || {};
+    const { message, reset } = req.body || {};
+    
+    // Handle memory reset request
+    if (reset) {
+      await Chat.findOneAndUpdate({ userId: session.user.id }, { $set: { messages: [] } }, { upsert: true });
+      return res.status(200).json({ success: true, reset: true, message: 'Memory cleared' });
+    }
+    
     if (!message?.trim()) return res.status(400).json({ success: false, message: 'Missing message' });
 
     await Chat.findOneAndUpdate(
