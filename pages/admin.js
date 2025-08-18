@@ -1,10 +1,12 @@
-import { useSession, signOut } from 'next-auth/react';
+import { useUser, useAuth, useClerk } from '@clerk/nextjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
 export default function AdminPage() {
-  const { data: session, status } = useSession();
+  const { user, isLoaded } = useUser();
+  const { isSignedIn } = useAuth();
+  const { signOut } = useClerk();
   const router = useRouter();
 
   const [rows, setRows] = useState([]);
@@ -31,8 +33,7 @@ export default function AdminPage() {
 
       if (res.status === 401) {
         toast.error('Session expired. Please log in again.');
-        await signOut({ redirect: false });
-        router.push('/login');
+        signOut({ redirectUrl: '/sign-in' });
         return;
       }
       if (res.status === 403) {
@@ -59,11 +60,15 @@ export default function AdminPage() {
 
   // auth gate + initial load
   useEffect(() => {
-    if (status === 'authenticated') {
-      if (session?.user?.role === 'admin') fetchForms();
+    if (isLoaded && !isSignedIn) {
+      router.push('/sign-in');
+      return;
+    }
+    if (isLoaded && isSignedIn) {
+      if (user?.publicMetadata?.role === 'admin') fetchForms();
       else router.replace('/');
     }
-  }, [status, session, page, limit]); // re-run on pagination change
+  }, [isLoaded, isSignedIn, user, page, limit]); // re-run on pagination change
 
   // refetch when search stops typing
   useEffect(() => {
@@ -78,17 +83,23 @@ export default function AdminPage() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this form?')) return;
     try {
-      const res = await fetch(`/api/forms/${id}`, { method: 'DELETE', credentials: 'include' });
+      const res = await fetch(`/api/admin/delete-form`, { 
+        method: 'DELETE', 
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formId: id })
+      });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        toast.success('Form deleted');
+        toast.success('Form deleted successfully');
         // if we deleted the last item on last page, move back one page
         if (rows.length === 1 && page > 1) setPage(p => p - 1);
         else fetchForms(false);
       } else {
         toast.error(data.message || 'Delete failed');
       }
-    } catch {
+    } catch (error) {
+      console.error('Delete error:', error);
       toast.error('Delete error');
     }
   };
@@ -127,15 +138,54 @@ export default function AdminPage() {
     }
   };
 
-  if (status === 'loading') return <div className="text-center mt-5">Loading...</div>;
-  if (!session || session.user.role !== 'admin') return null;
+  if (!isLoaded) return <div className="text-center mt-5">Loading...</div>;
+  if (!isSignedIn || user?.publicMetadata?.role !== 'admin') return null;
 
   return (
-    <div className="container py-4">
-      <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
-        <h2 className="m-0">Admin Panel — All User Submissions</h2>
+    <>
+      <style jsx>{`
+        .full-width-admin-container {
+          width: 100vw;
+          padding: 1rem;
+          margin: 0;
+          max-width: none;
+        }
+        
+        @media (max-width: 768px) {
+          .full-width-admin-container {
+            padding: 0.5rem !important;
+            width: 100vw !important;
+          }
+          
+          .admin-header {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            align-items: center !important;
+          }
+          
+          .admin-controls {
+            flex-direction: column !important;
+            width: 100% !important;
+            align-items: stretch !important;
+          }
+          
+          .admin-controls input {
+            min-width: 100% !important;
+          }
+        }
+      `}</style>
+      
+      <div className="full-width-admin-container">
+        <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3 admin-header">
+          <h2 className="m-0">Admin Panel — All User Submissions</h2>
 
-        <div className="d-flex gap-2 align-items-center">
+          <div className="d-flex gap-2 align-items-center admin-controls">
+          <button
+            className="btn btn-info"
+            onClick={() => router.push('/admin/users')}
+          >
+            Manage Users
+          </button>
           <input
             type="text"
             className="form-control"
@@ -244,6 +294,7 @@ export default function AdminPage() {
           </li>
         </ul>
       </nav>
-    </div>
+      </div>
+    </>
   );
 }

@@ -11,7 +11,7 @@ const MessageSchema = new mongoose.Schema(
 
 const ChatSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true, required: true, unique: true },
+    userId: { type: String, index: true, required: true, unique: true },
     messages: { type: [MessageSchema], default: [] },
   },
   { timestamps: true }

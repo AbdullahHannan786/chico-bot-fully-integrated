@@ -1,8 +1,10 @@
 // GET /api/admin/forms?page=1&limit=10&q=lahore
 import dbConnect from '../../../lib/mongodb';
 import Form from '../../../models/Form';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
+import { getAuth } from '@clerk/nextjs/server';
+import { createClerkClient } from '@clerk/nextjs/server';
+
+const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -11,21 +13,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  if (!session?.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-  // admin check (role or allow-list)
-  const isAdminRole = session.user.role === 'admin';
-  const allowList = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(s => s.trim().toLowerCase())
-    .filter(Boolean);
-  const isAllowListed = allowList.length
-    ? allowList.includes((session.user.email || '').toLowerCase())
-    : false;
-
-  if (!isAdminRole && !isAllowListed) {
-    return res.status(403).json({ success: false, message: 'Admins only' });
+  const { userId } = getAuth(req);
+  if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
+  // Check if user is admin
+  const user = await clerkClient.users.getUser(userId);
+  if (user.publicMetadata?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Admin access required' });
   }
 
   try {

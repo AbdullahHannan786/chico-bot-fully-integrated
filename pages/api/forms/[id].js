@@ -1,7 +1,9 @@
 import dbConnect from '../../../lib/mongodb';
 import Form from '../../../models/Form';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
+import { getAuth } from '@clerk/nextjs/server';
+import { createClerkClient } from '@clerk/nextjs/server';
+
+const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -11,14 +13,25 @@ export default async function handler(req, res) {
     method,
   } = req;
 
-  const session = await getServerSession(req, res, authOptions);
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
 
   // Helper: only owner (by userId) or admin can modify/delete
   const canWrite = async () => {
-    if (!session?.user) return false;
-    if (session.user.role === 'admin') return true;
-    const doc = await Form.findById(id).select('userId');
-    return doc && String(doc.userId) === String(session.user.id);
+    try {
+      // Check if user is admin
+      const user = await clerkClient.users.getUser(userId);
+      if (user.publicMetadata?.role === 'admin') return true;
+      
+      // Check if user is the owner
+      const doc = await Form.findById(id).select('userId');
+      return doc && String(doc.userId) === String(userId);
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      return false;
+    }
   };
 
   try {

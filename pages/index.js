@@ -1,4 +1,4 @@
-import { useSession } from 'next-auth/react';
+import { useUser } from '@clerk/nextjs';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
@@ -37,23 +37,38 @@ import { useRouter } from 'next/router';
 ];
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/signup');
+    if (isLoaded && !user) {
+      // Use replace instead of push to avoid navigation history issues
+      router.replace('/sign-up');
     }
-  }, [status]);
+  }, [isLoaded, user, router]);
 
-  if (status === 'loading' || !session) return null;
+  // Show loading while checking auth
+  if (!isLoaded) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything for unauthenticated users (will redirect)
+  if (!user) {
+    return null;
+  }
 
   return (
     <>
       {/* Hero Section (Welcome + Buttons) */}
       <div className="hero-container">
         <div className="hero-overlay">
-          <h1 className="hero-heading">Welcome back, {session.user.name}!</h1>
+          <h1 className="hero-heading">Welcome back, {user.fullName || user.firstName || 'User'}!</h1>
           <p className="hero-desc">
             Chico is your personal AI companion that listens, learns, and chats just like a friend.
             Start your personalized journey or jump into a smart conversation now.

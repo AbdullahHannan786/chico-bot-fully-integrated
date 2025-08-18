@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useUser, useAuth, useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 
 export default function NavbarTemp() {
-  const { data: session, status } = useSession();
+  const { user, isLoaded } = useUser();
+  const { isSignedIn } = useAuth();
+  const { signOut } = useClerk();
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -24,7 +26,7 @@ export default function NavbarTemp() {
   if (!mounted) {
     return (
       <nav className="navbar navbar-expand-lg" style={{ background: 'linear-gradient(90deg,#0ea5e9,#38bdf8)' }}>
-        <div className="container">
+        <div className="container-fluid">
           <span className="navbar-brand text-white fw-bold">Chico Robot</span>
         </div>
       </nav>
@@ -33,7 +35,7 @@ export default function NavbarTemp() {
 
   return (
     <nav className="navbar navbar-expand-lg" style={{ background: 'linear-gradient(90deg,#0ea5e9,#38bdf8)' }}>
-      <div className="container">
+      <div className="container-fluid">
         <Link className="navbar-brand text-white fw-bold" href="/">
           Chico Robot
         </Link>
@@ -62,12 +64,12 @@ export default function NavbarTemp() {
               <Link className="nav-link text-white" href="/contact">Contact</Link>
             </li>
            
-            {session?.user?.role === 'admin' && (
+            {user?.publicMetadata?.role === 'admin' && (
               <li className="nav-item">
                 <Link className="nav-link text-white fw-semibold" href="/admin">Admin Panel</Link>
               </li>
             )}
-            {session && (
+            {isSignedIn && (
               <li className="nav-item">
                 <Link className="nav-link text-white" href="/profile">Profile</Link>
               </li>
@@ -75,22 +77,26 @@ export default function NavbarTemp() {
           </ul>
 
           <div className="d-flex gap-2">
-            {status === 'loading' ? null : session ? (
+            {!isLoaded ? null : isSignedIn ? (
               <>
                 <span className="text-white small me-2">
-                  {session.user.name} {session.user.role === 'admin' ? '(admin)' : ''}
+                  {user?.fullName || user?.firstName || 'User'} {user?.publicMetadata?.role === 'admin' ? '(admin)' : ''}
                 </span>
                 <button
                   className="btn btn-outline-light btn-sm"
-                  onClick={() => signOut({ callbackUrl: '/' })}
+                  onClick={() => {
+                    signOut({
+                      redirectUrl: '/'
+                    });
+                  }}
                 >
                   Logout
                 </button>
               </>
             ) : (
               <>
-                <button className="btn btn-light btn-sm" onClick={() => router.push('/signup')}>Sign Up</button>
-                <button className="btn btn-outline-light btn-sm" onClick={() => signIn()}>Login</button>
+                <button className="btn btn-light btn-sm" onClick={() => router.push('/sign-up')}>Sign Up</button>
+                <button className="btn btn-outline-light btn-sm" onClick={() => router.push('/sign-in')}>Login</button>
               </>
             )}
           </div>

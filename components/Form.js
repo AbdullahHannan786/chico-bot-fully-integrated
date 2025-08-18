@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@clerk/nextjs';
 
 export default function Form() {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [formData, setFormData] = useState({ name: '', age: '', city: '', degree: '', phone: '' });
   const [isExisting, setIsExisting] = useState(false);
   const [message, setMessage] = useState('');
@@ -43,7 +43,7 @@ export default function Form() {
 
   return (
     <div className="container mt-4">
-      <h2>Welcome back, {session?.user?.name}</h2>
+      <h2>Welcome back, {user?.fullName || user?.firstName || 'User'}</h2>
       <p>You are logged in and ready to use the app.</p>
       {message && <div className="alert alert-success">{message}</div>}
       <form onSubmit={handleSubmit} className="p-4 bg-light rounded">

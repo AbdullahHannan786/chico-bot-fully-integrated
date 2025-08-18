@@ -39,6 +39,6 @@ export default async function handler(req, res) {
     }
 
     const publicUrl = `/uploads/avatars/${path.basename(absolute)}`;
-    return res.status(200).json({ url: publicUrl });
+    res.status(200).json({ url: publicUrl });
   });
 }

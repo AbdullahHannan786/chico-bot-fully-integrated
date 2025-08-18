@@ -13,7 +13,11 @@
   --accent:#0ea5e9;
 }
 
-html, body { height: 100%; }
+html, body { 
+  height: 100%; 
+  overflow-x: hidden;
+}
+
 body{
   margin:0;
   display:flex;
@@ -107,6 +111,25 @@ main { flex: 1 0 auto; }
 /* small helpers */
 .shadow-lg { transition: transform .2s ease, box-shadow .2s ease; }
 .shadow-lg:hover { transform: translateY(-4px); }
+
+/* Full width containers for admin pages */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    width: 100vw !important;
+    max-width: none !important;
+  }
+  
+  .full-width-container,
+  .full-width-admin-container {
+    width: 100vw !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
 
 
 

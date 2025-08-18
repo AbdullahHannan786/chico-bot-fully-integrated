@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@clerk/nextjs';
 
 /**
  * Custom hook to automatically clear model memory on page refresh/load
@@ -10,14 +10,14 @@ import { useSession } from 'next-auth/react';
  * @param {string} options.endpoint - API endpoint to call for reset (default: '/api/proxy-chat')
  */
 export const useModelMemoryReset = (convId = null, options = {}) => {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const {
     clearOnMount = true,
     clearOnUnload = true,
     endpoint = '/api/proxy-chat'
   } = options;
 
-  const userId = session?.user?.id || 'anon';
+  const userId = user?.id || 'anon';
 
   useEffect(() => {
     if (!clearOnMount && !clearOnUnload) return;

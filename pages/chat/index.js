@@ -1,13 +1,24 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { useSession } from "next-auth/react";
+import { useUser, useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/router";
 import useModelMemoryReset from "../../hooks/useModelMemoryReset";
 
 const Avatar = dynamic(() => import("../../components/ChikoAvatar"), { ssr: false });
 
 export default function ChatPage() {
-  const { data: session } = useSession();
-  const userId = session?.user?.id || "anon";
+  const { user, isLoaded } = useUser();
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
+  
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.replace('/sign-in');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  const userId = user?.id || "anon";
   const convId = useMemo(() => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`), []);
 
   // Use the custom hook to handle model memory reset on page refresh
@@ -253,6 +264,25 @@ export default function ChatPage() {
     // Use the manual reset function from the hook
     await manualReset();
   };
+
+  // Show loading state while Clerk is loading
+  if (!isLoaded) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="text-muted">Loading chat...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render chat if not signed in (will redirect)
+  if (!isSignedIn) {
+    return null;
+  }
 
   return (
     <div className="container-fluid py-4">

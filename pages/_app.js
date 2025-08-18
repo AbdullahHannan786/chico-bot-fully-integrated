@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
-import { SessionProvider } from 'next-auth/react';
+import { ClerkProvider } from '@clerk/nextjs';
 
 import Navbar from '../components/NavbarTemp';
 import Footer from '../components/Footer';
@@ -22,7 +22,14 @@ function Layout({ Component, pageProps }) {
 
   useEffect(() => {
     // Bootstrap JS (collapse, dropdowns, etc.)
-    import('bootstrap/dist/js/bootstrap.bundle.min.js');
+    const loadBootstrap = async () => {
+      try {
+        await import('bootstrap/dist/js/bootstrap.bundle.min.js');
+      } catch (error) {
+        console.warn('Failed to load Bootstrap JS:', error);
+      }
+    };
+    loadBootstrap();
 
     // Scroll‑reveal for elements with .reveal / .reveal-left / .reveal-right
     const io = new IntersectionObserver(
@@ -48,10 +55,12 @@ function Layout({ Component, pageProps }) {
   );
 }
 
-export default function MyApp({ Component, pageProps: { session, ...pageProps } }) {
+export default function MyApp({ Component, pageProps }) {
   return (
-    <SessionProvider session={session}>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    >
       <Layout Component={Component} pageProps={pageProps} />
-    </SessionProvider>
+    </ClerkProvider>
   );
 }

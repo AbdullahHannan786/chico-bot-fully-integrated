@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { useUser, useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/router";
 import toast from "react-hot-toast";
 
 export default function Profile() {
-  const { data: session } = useSession();
+  const { user, isLoaded } = useUser();
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
   const [userData, setUserData] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -13,12 +16,19 @@ export default function Profile() {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Redirect if not signed in
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (isLoaded && !isSignedIn) {
+      router.replace('/sign-in');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user?.id) return;
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`/api/forms?userId=${session.user.id}`);
+        const res = await fetch(`/api/forms`);
         if (!res.ok) throw new Error("Failed to load user data");
 
         const data = await res.json();
@@ -27,7 +37,7 @@ export default function Profile() {
         if (!form) {
           setUserData(null);
           setFormData({
-            name: session.user.name || "",
+            name: user.fullName || user.firstName || "",
             phone: "",
             city: "",
             degree: "",
@@ -50,7 +60,7 @@ export default function Profile() {
     };
 
     fetchData();
-  }, [session?.user?.id]);
+  }, [isLoaded, isSignedIn, user?.id]);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -70,7 +80,6 @@ export default function Profile() {
 
     const payload = {
       ...formData,
-      userId: session.user.id,
       avatarUrl: avatarPreview,
     };
 
@@ -103,22 +112,23 @@ export default function Profile() {
   };
 
   const handleAvatarUpload = async () => {
-    const userId = session?.user?.id;
+    const userId = user?.id;
     if (!userId) {
-      toast.error("Please save your profile before uploading an avatar.");
+      toast.error("Please sign in to upload avatar.");
       return;
     }
     if (!avatarFile) return toast.error("Please choose a file");
 
     const formDataUpload = new FormData();
     formDataUpload.append("avatar", avatarFile);
-    formDataUpload.append("email", session.user.email);
+    formDataUpload.append("email", user.emailAddresses?.[0]?.emailAddress || "");
     if (userData?.avatarPublicId) {
       formDataUpload.append("oldPublicId", userData.avatarPublicId);
     }
 
     setUploading(true);
     try {
+      // First, upload the avatar to Cloudinary
       const res = await fetch("/api/upload-avatar", {
         method: "POST",
         body: formDataUpload,
@@ -128,18 +138,42 @@ export default function Profile() {
 
       toast.success("Avatar uploaded");
 
-      const saveRes = await fetch("/api/forms", {
+      // Prepare profile data with avatar info
+      const profileData = {
+        name: formData.name || user.fullName || user.firstName || "",
+        phone: formData.phone || "",
+        city: formData.city || "",
+        degree: formData.degree || "",
+        age: formData.age || "",
+        avatarUrl: data.url,
+        avatarPublicId: data.public_id,
+      };
+
+      // Try to update existing profile first (PUT)
+      let saveRes = await fetch("/api/forms", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          userId,
-          avatarUrl: data.url,
-          avatarPublicId: data.public_id,
-        }),
+        body: JSON.stringify(profileData),
       });
 
-      const saveData = await saveRes.json();
+      let saveData = await saveRes.json();
+
+      // If profile doesn't exist (404), create a new one (POST)
+      if (!saveRes.ok && saveData.message === "Form not found") {
+        saveRes = await fetch("/api/forms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(profileData),
+        });
+        saveData = await saveRes.json();
+        
+        if (saveRes.ok) {
+          toast.success("Profile created and avatar saved!");
+        }
+      } else if (saveRes.ok) {
+        toast.success("Avatar updated successfully!");
+      }
+
       if (!saveRes.ok) throw new Error(saveData.message || "Save failed");
 
       setAvatarPreview(data.url);
@@ -152,6 +186,22 @@ export default function Profile() {
       setUploading(false);
     }
   };
+
+  // Show loading while Clerk is loading
+  if (!isLoaded) {
+    return (
+      <main className="page-shell d-flex justify-content-center align-items-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </main>
+    );
+  }
+
+  // Don't render if not signed in (will redirect)
+  if (!isSignedIn) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -171,7 +221,7 @@ export default function Profile() {
             {/* Avatar — Next/Image for sharper rendering */}
             <div className="avatar-ring">
               <Image
-                src={avatarPreview || "/default-avatar.png"}
+                src={avatarPreview || "/avatar.png"}
                 alt="avatar"
                 width={160}
                 height={160}
